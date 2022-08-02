@@ -1,27 +1,26 @@
 package com.madara.controller;
 
-import com.madara.model.Chat;
-import com.madara.service.ChatService;
-import org.springframework.web.bind.annotation.*;
+import com.madara.model.ChatMessage;
+import org.springframework.messaging.handler.annotation.MessageMapping;
+import org.springframework.messaging.handler.annotation.Payload;
+import org.springframework.messaging.handler.annotation.SendTo;
+import org.springframework.messaging.simp.SimpMessageHeaderAccessor;
+import org.springframework.stereotype.Controller;
 
-import java.util.Optional;
-
-@RestController
-@RequestMapping("/api/v1/chat")
+@Controller
 public class ChatController {
-    private final ChatService chatService;
 
-    public ChatController(ChatService chatService) {
-        this.chatService = chatService;
-    }
+	@MessageMapping("/chat.register")
+	@SendTo("/topic/public")
+	public ChatMessage register(@Payload ChatMessage chatMessage, SimpMessageHeaderAccessor headerAccessor) {
+		headerAccessor.getSessionAttributes().put("username", chatMessage.getSender());
+		return chatMessage;
+	}
 
-    @PostMapping("/create")
-    public Chat createChat(@RequestBody Chat chat){
-        return chatService.save(chat);
-    }
+	@MessageMapping("/chat.send")
+	@SendTo("/topic/public")
+	public ChatMessage sendMessage(@Payload ChatMessage chatMessage) {
+		return chatMessage;
+	}
 
-    @GetMapping("/get-chat/{id}")
-    public Optional<Chat> getChat(@PathVariable Long id){
-        return chatService.findOne(id);
-    }
 }
